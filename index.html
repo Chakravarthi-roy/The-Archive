@@ -6,777 +6,147 @@
 <title>The Archive</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Space+Mono:wght@400;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg:#1B1F2B;
-    --bg-alt:#20263A;
-    --bg-deep:#151926;
-    --card:#F0E9D8;
-    --card-shadow:rgba(0,0,0,0.45);
-    --ink:#2A2620;
-    --ink-soft:#6B6350;
-    --brass:#C79A56;
-    --brass-dark:#9C7638;
-    --stamp:#9B4B3F;
-    --text-light:#ECE6D6;
-    --text-muted:#8B8779;
-    --line:#333B52;
-
-    --video:#7C9885;
-    --post:#B0584C;
-    --article:#7C8FB8;
-    --link:#C79A56;
-  }
-
-  *{box-sizing:border-box; margin:0; padding:0;}
-
-  body{
-    background:
-      radial-gradient(ellipse at top, #232941 0%, var(--bg) 45%, var(--bg-deep) 100%);
-    color:var(--text-light);
-    font-family:'Work Sans', sans-serif;
-    min-height:100vh;
-    padding:32px 20px 80px;
-  }
-
-  .wrap{max-width:960px; margin:0 auto;}
-
-  /* HEADER */
-  header{
-    text-align:center;
-    margin-bottom:36px;
-    padding-bottom:28px;
-    border-bottom:1px solid var(--line);
-  }
-  .eyebrow{
-    font-family:'Space Mono', monospace;
-    font-size:11px;
-    letter-spacing:0.25em;
-    color:var(--brass);
-    text-transform:uppercase;
-    margin-bottom:10px;
-  }
-  h1{
-    font-family:'Fraunces', serif;
-    font-weight:700;
-    font-size:clamp(36px, 6vw, 54px);
-    letter-spacing:-0.01em;
-    color:var(--text-light);
-  }
-  .tagline{
-    font-family:'Fraunces', serif;
-    font-style:italic;
-    font-weight:400;
-    color:var(--text-muted);
-    font-size:16px;
-    margin-top:8px;
-  }
-
-  /* QUICK ADD SLIP */
-  .slip{
-    background:var(--card);
-    color:var(--ink);
-    border-radius:2px;
-    padding:26px 26px 22px;
-    box-shadow:0 18px 40px var(--card-shadow), 0 2px 0 var(--brass-dark);
-    position:relative;
-    margin-bottom:40px;
-  }
-  .slip::before{
-    content:'';
-    position:absolute;
-    top:0; left:24px; right:24px; height:1px;
-    background:repeating-linear-gradient(90deg, var(--ink-soft) 0 6px, transparent 6px 12px);
-    opacity:0.25;
-  }
-  .slip-label{
-    font-family:'Space Mono', monospace;
-    font-size:10px;
-    letter-spacing:0.18em;
-    text-transform:uppercase;
-    color:var(--ink-soft);
-    position:absolute;
-    top:10px; right:20px;
-  }
-  .slip h2{
-    font-family:'Fraunces', serif;
-    font-size:20px;
-    font-weight:600;
-    margin-bottom:16px;
-  }
-  .field-row{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:12px;}
-  .field{flex:1; min-width:180px; display:flex; flex-direction:column; gap:5px;}
-  .field.full{flex-basis:100%;}
-  label{
-    font-family:'Space Mono', monospace;
-    font-size:10.5px;
-    letter-spacing:0.08em;
-    text-transform:uppercase;
-    color:var(--ink-soft);
-  }
-  input[type=text], input[type=url], textarea{
-    font-family:'Work Sans', sans-serif;
-    font-size:14.5px;
-    padding:9px 10px;
-    border:1px solid #C9BFA0;
-    border-radius:2px;
-    background:#FBF8F0;
-    color:var(--ink);
-    outline:none;
-  }
-  input:focus, textarea:focus{border-color:var(--stamp);}
-  textarea{resize:vertical; min-height:44px; font-family:'Work Sans', sans-serif;}
-
-  .type-preview{
-    display:flex; align-items:center; gap:8px;
-    font-family:'Space Mono', monospace;
-    font-size:11px;
-    color:var(--ink-soft);
-    margin-top:2px;
-    min-height:16px;
-  }
-
-  .slip-actions{display:flex; justify-content:space-between; align-items:center; margin-top:16px;}
-  .status-msg{font-family:'Space Mono', monospace; font-size:11.5px; color:var(--ink-soft);}
-
-  button{
-    font-family:'Space Mono', monospace;
-    cursor:pointer;
-    border:none;
-  }
-  .btn-file{
-    background:var(--stamp);
-    color:#F5E9DE;
-    padding:11px 22px;
-    border-radius:2px;
-    font-size:12.5px;
-    letter-spacing:0.08em;
-    text-transform:uppercase;
-    font-weight:700;
-    box-shadow:0 4px 0 #6E332A;
-    transition:transform .08s ease;
-  }
-  .btn-file:hover{transform:translateY(1px);}
-  .btn-file:active{transform:translateY(3px); box-shadow:0 1px 0 #6E332A;}
-  .btn-file:disabled{opacity:0.5; cursor:default;}
-
-  /* TOOLBAR */
-  .toolbar{
-    display:flex; gap:12px; flex-wrap:wrap; align-items:center;
-    margin-bottom:28px;
-  }
-  .search-box{
-    flex:1; min-width:200px;
-    background:var(--bg-alt);
-    border:1px solid var(--line);
-    border-radius:2px;
-    padding:10px 12px;
-    color:var(--text-light);
-    font-family:'Work Sans';
-    font-size:14px;
-  }
-  .search-box::placeholder{color:var(--text-muted);}
-  .filter-chips{display:flex; gap:6px; flex-wrap:wrap;}
-  .chip{
-    background:transparent;
-    border:1px solid var(--line);
-    color:var(--text-muted);
-    padding:8px 13px;
-    border-radius:20px;
-    font-size:11px;
-    letter-spacing:0.05em;
-    text-transform:uppercase;
-  }
-  .chip.active{
-    background:var(--brass);
-    border-color:var(--brass);
-    color:#20263A;
-    font-weight:700;
-  }
-  .btn-pull{
-    background:var(--bg-alt);
-    border:1px solid var(--brass);
-    color:var(--brass);
-    padding:9px 16px;
-    border-radius:2px;
-    font-size:11px;
-    letter-spacing:0.06em;
-    text-transform:uppercase;
-    white-space:nowrap;
-  }
-  .btn-pull:hover{background:var(--brass); color:#20263A;}
-
-  /* PEOPLE GRID */
-  .grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(230px, 1fr));
-    gap:22px;
-  }
-
-  .person-card{
-    position:relative;
-    cursor:pointer;
-  }
-  .stack-behind{
-    position:absolute;
-    inset:0;
-    background:var(--card);
-    border-radius:2px;
-    transform:translate(5px, 6px) rotate(1.2deg);
-    opacity:0.35;
-  }
-  .stack-behind.two{
-    transform:translate(9px, 11px) rotate(-1deg);
-    opacity:0.2;
-  }
-  .person-inner{
-    position:relative;
-    background:var(--card);
-    color:var(--ink);
-    border-radius:2px;
-    padding:18px 16px 16px;
-    box-shadow:0 10px 26px var(--card-shadow);
-    min-height:118px;
-    display:flex; flex-direction:column; justify-content:space-between;
-    transition:transform .12s ease;
-  }
-  .person-card:hover .person-inner{transform:translateY(-3px);}
-  .tab{
-    position:absolute;
-    top:-10px; left:16px;
-    background:var(--brass);
-    color:#2A2620;
-    font-family:'Space Mono', monospace;
-    font-size:12px;
-    font-weight:700;
-    width:26px; height:20px;
-    display:flex; align-items:center; justify-content:center;
-    border-radius:2px 2px 0 0;
-  }
-  .p-name{
-    font-family:'Fraunces', serif;
-    font-weight:600;
-    font-size:19px;
-    margin-top:4px;
-    line-height:1.15;
-  }
-  .p-meta{
-    font-family:'Space Mono', monospace;
-    font-size:11px;
-    color:var(--ink-soft);
-    margin-top:10px;
-    display:flex; justify-content:space-between; align-items:flex-end;
-  }
-  .p-badges{display:flex; gap:4px;}
-  .dot{width:7px; height:7px; border-radius:50%; display:inline-block;}
-
-  /* EMPTY STATE */
-  .empty{
-    text-align:center;
-    padding:60px 20px;
-    color:var(--text-muted);
-    font-family:'Fraunces', serif;
-    font-style:italic;
-    font-size:17px;
-    border:1px dashed var(--line);
-    border-radius:4px;
-  }
-
-  /* DETAIL VIEW */
-  .detail{display:none;}
-  .detail.open{display:block;}
-  .detail-header{
-    display:flex; justify-content:space-between; align-items:flex-start;
-    margin-bottom:22px;
-    padding-bottom:16px;
-    border-bottom:1px solid var(--line);
-  }
-  .back-btn{
-    background:none; border:none; color:var(--brass);
-    font-family:'Space Mono'; font-size:12px; letter-spacing:0.05em;
-    text-transform:uppercase; margin-bottom:14px; padding:0;
-  }
-  .detail-title{
-    font-family:'Fraunces', serif; font-weight:700; font-size:32px;
-  }
-  .detail-count{color:var(--text-muted); font-family:'Space Mono'; font-size:12px; margin-top:4px;}
-  .empty-drawer-btn{
-    background:none; border:1px solid var(--stamp); color:var(--stamp);
-    padding:8px 14px; border-radius:2px; font-size:10.5px;
-    letter-spacing:0.05em; text-transform:uppercase;
-  }
-  .empty-drawer-btn:hover{background:var(--stamp); color:#F5E9DE;}
-
-  .item-list{display:flex; flex-direction:column; gap:12px;}
-  .item-card{
-    background:var(--bg-alt);
-    border:1px solid var(--line);
-    border-left:3px solid var(--link);
-    border-radius:3px;
-    padding:14px 16px;
-    display:flex; justify-content:space-between; gap:14px;
-  }
-  .item-card.type-video{border-left-color:var(--video);}
-  .item-card.type-post{border-left-color:var(--post);}
-  .item-card.type-article{border-left-color:var(--article);}
-  .item-body{flex:1; min-width:0;}
-  .item-top{display:flex; align-items:center; gap:8px; margin-bottom:5px; flex-wrap:wrap;}
-  .badge{
-    font-family:'Space Mono'; font-size:9.5px; letter-spacing:0.08em;
-    text-transform:uppercase; padding:2px 7px; border-radius:10px;
-    color:#151926; font-weight:700;
-  }
-  .badge.type-video{background:var(--video);}
-  .badge.type-post{background:var(--post); color:#F5E9DE;}
-  .badge.type-article{background:var(--article);}
-  .badge.type-link{background:var(--link);}
-  .item-title{
-    font-size:14.5px; font-weight:600; color:var(--text-light);
-    text-decoration:none;
-    display:block;
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-  }
-  .item-title:hover{color:var(--brass);}
-  .item-note{font-size:13px; color:var(--text-muted); margin-top:4px; font-style:italic;}
-  .item-tags{margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;}
-  .tag-pill{
-    font-family:'Space Mono'; font-size:9.5px; color:var(--text-muted);
-    border:1px solid var(--line); padding:1px 7px; border-radius:8px;
-  }
-  .item-actions{display:flex; align-items:flex-start;}
-  .del-btn{
-    background:none; color:var(--text-muted); font-size:16px; line-height:1;
-    padding:2px 6px;
-  }
-  .del-btn:hover{color:var(--stamp);}
-
-  /* MODAL (pull a card) */
-  .modal-overlay{
-    display:none;
-    position:fixed; inset:0; background:rgba(10,12,20,0.72);
-    align-items:center; justify-content:center; z-index:50; padding:20px;
-  }
-  .modal-overlay.open{display:flex;}
-  .modal-card{
-    background:var(--card); color:var(--ink); max-width:420px; width:100%;
-    border-radius:3px; padding:26px; position:relative;
-    box-shadow:0 30px 70px rgba(0,0,0,0.6);
-  }
-  .modal-eyebrow{
-    font-family:'Space Mono'; font-size:10px; letter-spacing:0.15em;
-    text-transform:uppercase; color:var(--stamp); margin-bottom:10px;
-  }
-  .modal-person{font-family:'Fraunces', serif; font-weight:600; font-size:20px; margin-bottom:6px;}
-  .modal-note{font-style:italic; color:var(--ink-soft); font-size:13.5px; margin-bottom:14px;}
-  .modal-actions{display:flex; gap:10px; margin-top:16px;}
-  .modal-actions a, .modal-actions button{
-    font-family:'Space Mono'; font-size:11px; letter-spacing:0.06em;
-    text-transform:uppercase; padding:9px 14px; border-radius:2px; text-decoration:none;
-    text-align:center;
-  }
-  .modal-open-link{background:var(--stamp); color:#F5E9DE; flex:1;}
-  .modal-close{background:transparent; border:1px solid var(--ink-soft); color:var(--ink);}
-
-  .loading-msg{
-    text-align:center; padding:60px 0; color:var(--text-muted);
-    font-family:'Space Mono'; font-size:12px; letter-spacing:0.05em;
-  }
-
-  @media (max-width:520px){
-    .field-row{flex-direction:column;}
-    .toolbar{flex-direction:column; align-items:stretch;}
-  }
-</style>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,500&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="wrap">
-
+  <div class="landing-wrap" id="landing-wrap">
   <header>
-    <div class="eyebrow">Personal Archive · No.001</div>
+    <div class="eyebrow">Personal Archive</div>
     <h1>The Archive</h1>
     <div class="tagline">for the people you follow, and everything worth keeping</div>
+    <div class="header-rule"></div>
   </header>
 
-  <!-- QUICK ADD -->
-  <div class="slip">
-    <div class="slip-label">Catalog Slip</div>
-    <h2>File something away</h2>
-    <div class="field-row">
-      <div class="field full">
-        <label for="in-url">Link</label>
-        <input type="url" id="in-url" placeholder="Paste a link — YouTube, a post, an article, anything">
-        <div class="type-preview" id="type-preview"></div>
-      </div>
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label for="in-person">Filed under</label>
-        <input type="text" id="in-person" list="people-list" placeholder="Who's this from?">
-        <datalist id="people-list"></datalist>
-      </div>
-      <div class="field">
-        <label for="in-tags">Tags <span style="opacity:.6">(optional, comma separated)</span></label>
-        <input type="text" id="in-tags" placeholder="e.g. startup, react, funny">
-      </div>
-    </div>
-    <div class="field-row">
-      <div class="field full">
-        <label for="in-note">Note <span style="opacity:.6">(why'd you save this?)</span></label>
-        <textarea id="in-note" placeholder="Optional — a line so future-you remembers why"></textarea>
-      </div>
-    </div>
-    <div class="slip-actions">
-      <div class="status-msg" id="status-msg"></div>
-      <button class="btn-file" id="file-btn">File it</button>
-    </div>
-  </div>
-
-  <!-- MAIN VIEW -->
   <div id="main-view">
-    <div class="toolbar">
-      <input type="text" class="search-box" id="search-box" placeholder="Search the archive…">
-      <div class="filter-chips" id="filter-chips">
-        <button class="chip active" data-type="all">All</button>
-        <button class="chip" data-type="video">Video</button>
-        <button class="chip" data-type="post">Post</button>
-        <button class="chip" data-type="article">Article</button>
-        <button class="chip" data-type="link">Link</button>
-      </div>
-      <button class="btn-pull" id="pull-btn">Pull a card ⟲</button>
+    <div class="stage"><div class="belt" id="belt"></div></div>
+    <div class="name-display">
+      <div class="n" id="front-name">—</div>
+      <div class="c" id="front-count">—</div>
     </div>
-
-    <div id="loading" class="loading-msg">Opening the drawer…</div>
-    <div id="grid" class="grid" style="display:none;"></div>
-    <div id="empty-state" class="empty" style="display:none;">
-      Nothing filed yet. Paste a link above and it'll land here, grouped by who it's from.
+    <div class="controls">
+      <div class="arrow-btn" id="btn-left"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></div>
+      <div class="arrow-btn" id="btn-right"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
     </div>
+    <div class="hint">hover the belt to pause · click a photo to open their page</div>
+  </div>
   </div>
 
-  <!-- DETAIL VIEW -->
-  <div id="detail-view" class="detail">
-    <button class="back-btn" id="back-btn">← Back to the drawer</button>
-    <div class="detail-header">
+  <div class="detail" id="detail-view">
+    <button class="back-btn" id="back-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      Back
+    </button>
+    <div class="profile-head">
+      <img class="profile-photo" id="detail-photo" src="" alt="">
       <div>
-        <div class="detail-title" id="detail-name"></div>
-        <div class="detail-count" id="detail-count"></div>
+        <div class="profile-name" id="detail-name"></div>
+        <div class="profile-sub" id="detail-sub"></div>
       </div>
-      <button class="empty-drawer-btn" id="empty-drawer-btn">Empty this drawer</button>
     </div>
-    <div class="item-list" id="item-list"></div>
+
+    <div class="action-row">
+      <button class="action-btn" id="btn-add-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>Add Link</button>
+      <button class="action-btn" id="btn-add-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"></path><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>Add Text</button>
+      <button class="action-btn" id="btn-add-pdf"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>Add PDF</button>
+    </div>
+
+    <div class="group-label">Links</div>
+    <div id="detail-links"></div>
+    <div class="group-label">PDFs</div>
+    <div id="detail-pdfs"></div>
+    <div class="group-label">Text &amp; Notes</div>
+    <div id="detail-notes"></div>
   </div>
 
-</div>
+  <!-- ADD PERSON MODAL -->
+  <div class="overlay" id="add-person-overlay">
+    <div class="modal-box box">
+      <h3>Add someone new</h3>
+      <label for="ap-name">Name</label>
+      <input type="text" id="ap-name" placeholder="e.g. Marques Brownlee">
 
-<!-- MODAL -->
-<div class="modal-overlay" id="modal-overlay">
-  <div class="modal-card">
-    <div class="modal-eyebrow" id="modal-badge">Pulled from the drawer</div>
-    <div class="modal-person" id="modal-title"></div>
-    <div class="modal-note" id="modal-note"></div>
-    <div class="modal-actions">
-      <a href="#" target="_blank" class="modal-open-link" id="modal-open">Open it</a>
-      <button class="modal-close" id="modal-close">Close</button>
+      <label>Photo</label>
+      <div class="upload-zone" id="ap-upload-zone">
+        <input type="file" id="ap-photo-file" accept="image/*">
+        <span class="upload-label" id="ap-upload-label">Click to upload a photo</span>
+      </div>
+      <div class="or-divider">or</div>
+      <input type="text" id="ap-photo-url" placeholder="Paste an image link instead">
+      <img class="preview-thumb" id="ap-preview">
+      <div class="field-note">Photos are saved right in the app — no account needed, they'll still be here next time.</div>
+
+      <div class="modal-actions">
+        <button class="modal-cancel" id="ap-cancel">Cancel</button>
+        <button class="modal-submit" id="ap-submit">Add</button>
+      </div>
     </div>
   </div>
-</div>
 
-<script>
-let people = [];
-let items = [];
-let currentPersonId = null;
-let activeFilter = 'all';
-
-function escapeHtml(str){
-  const d = document.createElement('div');
-  d.textContent = str || '';
-  return d.innerHTML;
-}
-function genId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
-
-async function loadData(){
-  try{
-    const p = await window.storage.get('archive-people', false);
-    people = p ? JSON.parse(p.value) : [];
-  }catch(e){ people = []; }
-  try{
-    const it = await window.storage.get('archive-items', false);
-    items = it ? JSON.parse(it.value) : [];
-  }catch(e){ items = []; }
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('grid').style.display = 'grid';
-  renderAll();
-}
-
-async function savePeople(){
-  try{ await window.storage.set('archive-people', JSON.stringify(people), false); }
-  catch(e){ console.error('save people failed', e); }
-}
-async function saveItems(){
-  try{ await window.storage.set('archive-items', JSON.stringify(items), false); }
-  catch(e){ console.error('save items failed', e); }
-}
-
-function detectType(url){
-  try{
-    const u = new URL(url);
-    const h = u.hostname.replace('www.','');
-    if(h.includes('youtube.com') || h.includes('youtu.be')) return 'video';
-    if(h.includes('twitter.com') || h.includes('x.com')) return 'post';
-    if(h.includes('instagram.com') || h.includes('reddit.com') || h.includes('threads.net') || h.includes('tiktok.com') || h.includes('linkedin.com')) return 'post';
-    if(h.includes('medium.com') || h.includes('substack.com') || h.includes('dev.to')) return 'article';
-    return 'link';
-  }catch(e){ return 'link'; }
-}
-function typeLabel(t){
-  return {video:'Video', post:'Post', article:'Article', link:'Link'}[t] || 'Link';
-}
-
-async function fetchTitle(url, type){
-  try{
-    if(type === 'video' && (url.includes('youtube.com') || url.includes('youtu.be'))){
-      const r = await fetch('https://www.youtube.com/oembed?url=' + encodeURIComponent(url) + '&format=json');
-      if(r.ok){ const d = await r.json(); return d.title || null; }
-    }
-    if(type === 'post' && (url.includes('twitter.com') || url.includes('x.com'))){
-      const r = await fetch('https://publish.twitter.com/oembed?url=' + encodeURIComponent(url));
-      if(r.ok){ const d = await r.json(); if(d.html){ const t = d.html.replace(/<[^>]+>/g,' ').trim(); return t.slice(0,120) || null; } }
-    }
-  }catch(e){ /* CORS or network — fall back silently */ }
-  try{ return new URL(url).hostname.replace('www.',''); }
-  catch(e){ return url; }
-}
-
-document.getElementById('in-url').addEventListener('input', (e)=>{
-  const url = e.target.value.trim();
-  const preview = document.getElementById('type-preview');
-  if(!url){ preview.textContent = ''; return; }
-  const t = detectType(url);
-  preview.textContent = 'Detected as: ' + typeLabel(t);
-});
-
-function findOrCreatePerson(name){
-  const clean = name.trim();
-  if(!clean) return null;
-  const existing = people.find(p => p.name.toLowerCase() === clean.toLowerCase());
-  if(existing) return existing.id;
-  const p = { id: genId(), name: clean, createdAt: Date.now() };
-  people.push(p);
-  return p.id;
-}
-
-document.getElementById('file-btn').addEventListener('click', async ()=>{
-  const urlInput = document.getElementById('in-url');
-  const personInput = document.getElementById('in-person');
-  const noteInput = document.getElementById('in-note');
-  const tagsInput = document.getElementById('in-tags');
-  const status = document.getElementById('status-msg');
-  const btn = document.getElementById('file-btn');
-
-  const url = urlInput.value.trim();
-  if(!url){ status.textContent = 'Paste a link first.'; return; }
-  let validUrl = url;
-  if(!/^https?:\/\//i.test(validUrl)) validUrl = 'https://' + validUrl;
-
-  btn.disabled = true;
-  status.textContent = 'Filing…';
-
-  const type = detectType(validUrl);
-  const personName = personInput.value.trim() || 'Unsorted';
-  const personId = findOrCreatePerson(personName);
-  const title = await fetchTitle(validUrl, type);
-  const tags = tagsInput.value.split(',').map(t=>t.trim()).filter(Boolean);
-
-  items.unshift({
-    id: genId(),
-    personId,
-    url: validUrl,
-    type,
-    title: title || validUrl,
-    note: noteInput.value.trim(),
-    tags,
-    createdAt: Date.now()
-  });
-
-  await savePeople();
-  await saveItems();
-
-  urlInput.value=''; personInput.value=''; noteInput.value=''; tagsInput.value='';
-  document.getElementById('type-preview').textContent='';
-  status.textContent = 'Filed under ' + personName + '.';
-  btn.disabled = false;
-  setTimeout(()=>{ status.textContent=''; }, 2500);
-
-  renderAll();
-});
-
-function countByType(personId){
-  const counts = {video:0, post:0, article:0, link:0};
-  items.filter(i=>i.personId===personId).forEach(i=>{ counts[i.type] = (counts[i.type]||0)+1; });
-  return counts;
-}
-
-function renderPeopleDatalist(){
-  const dl = document.getElementById('people-list');
-  dl.innerHTML = people.map(p=>`<option value="${escapeHtml(p.name)}">`).join('');
-}
-
-function renderGrid(){
-  const grid = document.getElementById('grid');
-  const emptyState = document.getElementById('empty-state');
-  const search = document.getElementById('search-box').value.toLowerCase();
-
-  let visiblePeople = people.filter(p=>{
-    const theirItems = items.filter(i=>i.personId===p.id);
-    if(activeFilter !== 'all' && !theirItems.some(i=>i.type===activeFilter)) return false;
-    if(search){
-      const nameMatch = p.name.toLowerCase().includes(search);
-      const itemMatch = theirItems.some(i=> (i.title||'').toLowerCase().includes(search) || (i.note||'').toLowerCase().includes(search) || (i.tags||[]).some(t=>t.toLowerCase().includes(search)));
-      if(!nameMatch && !itemMatch) return false;
-    }
-    return theirItems.length > 0;
-  });
-
-  visiblePeople.sort((a,b)=>{
-    const la = Math.max(...items.filter(i=>i.personId===a.id).map(i=>i.createdAt), 0);
-    const lb = Math.max(...items.filter(i=>i.personId===b.id).map(i=>i.createdAt), 0);
-    return lb - la;
-  });
-
-  if(people.length === 0){
-    grid.style.display='none';
-    emptyState.style.display='block';
-    return;
-  }
-  if(visiblePeople.length === 0){
-    grid.innerHTML = '';
-    grid.style.display='none';
-    emptyState.style.display='block';
-    emptyState.textContent = 'No matches. Try a different search or filter.';
-    return;
-  }
-  emptyState.style.display='none';
-  grid.style.display='grid';
-
-  grid.innerHTML = visiblePeople.map(p=>{
-    const count = items.filter(i=>i.personId===p.id).length;
-    const counts = countByType(p.id);
-    const initial = p.name.trim()[0]?.toUpperCase() || '?';
-    const dots = Object.entries(counts).filter(([,c])=>c>0).map(([t])=>`<span class="dot" style="background:var(--${t})"></span>`).join('');
-    const stack2 = count > 4 ? '<div class="stack-behind two"></div>' : '';
-    const stack1 = count > 1 ? '<div class="stack-behind"></div>' : '';
-    return `
-      <div class="person-card" data-id="${p.id}">
-        ${stack2}${stack1}
-        <div class="person-inner">
-          <div class="tab">${escapeHtml(initial)}</div>
-          <div class="p-name">${escapeHtml(p.name)}</div>
-          <div class="p-meta">
-            <span>${count} filed</span>
-            <span class="p-badges">${dots}</span>
+  <!-- ADD CONTENT MODAL -->
+  <div class="overlay" id="add-content-overlay">
+    <div class="modal-box box">
+      <h3 id="ac-heading">Add</h3>
+      <div id="ac-link-fields" style="display:none;">
+        <label for="ac-link-title">Title</label>
+        <input type="text" id="ac-link-title" placeholder="What is it?">
+        <label for="ac-link-url">Link</label>
+        <input type="text" id="ac-link-url" placeholder="Paste the URL">
+        <label>Type</label>
+        <div class="custom-select" id="ac-type-select">
+          <button type="button" class="custom-select-trigger" id="ac-type-trigger">
+            <span id="ac-type-label">Video</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+          <div class="custom-select-menu" id="ac-type-menu">
+            <div class="custom-select-option selected" data-value="Video">Video</div>
+            <div class="custom-select-option" data-value="Post">Post</div>
+            <div class="custom-select-option" data-value="Article">Article</div>
           </div>
         </div>
-      </div>`;
-  }).join('');
-
-  grid.querySelectorAll('.person-card').forEach(el=>{
-    el.addEventListener('click', ()=> openDetail(el.dataset.id));
-  });
-}
-
-function openDetail(personId){
-  currentPersonId = personId;
-  document.getElementById('main-view').style.display = 'none';
-  document.getElementById('detail-view').classList.add('open');
-  renderDetail();
-}
-document.getElementById('back-btn').addEventListener('click', ()=>{
-  document.getElementById('detail-view').classList.remove('open');
-  document.getElementById('main-view').style.display = 'block';
-  currentPersonId = null;
-  renderAll();
-});
-
-function renderDetail(){
-  const person = people.find(p=>p.id===currentPersonId);
-  if(!person) return;
-  const theirItems = items.filter(i=>i.personId===currentPersonId).sort((a,b)=>b.createdAt-a.createdAt);
-  document.getElementById('detail-name').textContent = person.name;
-  document.getElementById('detail-count').textContent = theirItems.length + ' item' + (theirItems.length===1?'':'s') + ' filed';
-
-  const list = document.getElementById('item-list');
-  list.innerHTML = theirItems.map(item=>`
-    <div class="item-card type-${item.type}">
-      <div class="item-body">
-        <div class="item-top">
-          <span class="badge type-${item.type}">${typeLabel(item.type)}</span>
-        </div>
-        <a href="${escapeHtml(item.url)}" target="_blank" class="item-title">${escapeHtml(item.title)}</a>
-        ${item.note ? `<div class="item-note">"${escapeHtml(item.note)}"</div>` : ''}
-        ${item.tags && item.tags.length ? `<div class="item-tags">${item.tags.map(t=>`<span class="tag-pill">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
       </div>
-      <div class="item-actions">
-        <button class="del-btn" data-id="${item.id}" title="Remove">✕</button>
+      <div id="ac-text-fields" style="display:none;">
+        <label for="ac-text-title">Title</label>
+        <input type="text" id="ac-text-title" placeholder="Give it a name">
+        <label for="ac-text-body">Text <span style="opacity:.6">(markdown supported)</span></label>
+        <textarea id="ac-text-body" placeholder="**bold**, # headers, - lists, [links](url)…"></textarea>
+      </div>
+      <div id="ac-pdf-fields" style="display:none;">
+        <label>PDF file <span style="opacity:.6">(up to ~3.5MB)</span></label>
+        <div class="upload-zone" id="ac-pdf-upload-zone">
+          <input type="file" id="ac-pdf-file" accept="application/pdf">
+          <span class="upload-label" id="ac-pdf-upload-label">Click to choose a PDF</span>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-cancel" id="ac-cancel">Cancel</button>
+        <button class="modal-submit" id="ac-submit">Add</button>
       </div>
     </div>
-  `).join('');
+  </div>
 
-  list.querySelectorAll('.del-btn').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      items = items.filter(i=>i.id!==btn.dataset.id);
-      await saveItems();
-      renderDetail();
-    });
-  });
-}
+  <!-- PDF VIEWER MODAL -->
+  <div class="overlay" id="pdf-modal-overlay">
+    <div class="pdf-box box">
+      <div class="pdf-head">
+        <div class="pdf-title" id="pdf-modal-title">Document</div>
+        <button class="close-x" id="pdf-modal-close">✕</button>
+      </div>
+      <div class="pdf-canvas-wrap"><iframe id="pdf-modal-frame" src=""></iframe></div>
+    </div>
+  </div>
 
-document.getElementById('empty-drawer-btn').addEventListener('click', async ()=>{
-  const person = people.find(p=>p.id===currentPersonId);
-  if(!person) return;
-  if(!confirm(`Remove ${person.name} and everything filed under them?`)) return;
-  items = items.filter(i=>i.personId!==currentPersonId);
-  people = people.filter(p=>p.id!==currentPersonId);
-  await savePeople();
-  await saveItems();
-  document.getElementById('detail-view').classList.remove('open');
-  document.getElementById('main-view').style.display = 'block';
-  currentPersonId = null;
-  renderAll();
-});
+  <!-- READING VIEW MODAL -->
+  <div class="overlay" id="reading-overlay">
+    <div class="reading-box box">
+      <button class="close-x reading-close" id="reading-close">✕</button>
+      <div class="reading-badge" id="reading-badge">Note</div>
+      <div class="reading-title" id="reading-title"></div>
+      <div class="reading-meta" id="reading-meta"></div>
+      <div class="reading-body" id="reading-body"></div>
+    </div>
+  </div>
 
-document.getElementById('search-box').addEventListener('input', renderGrid);
-document.getElementById('filter-chips').addEventListener('click', (e)=>{
-  const chip = e.target.closest('.chip');
-  if(!chip) return;
-  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
-  chip.classList.add('active');
-  activeFilter = chip.dataset.type;
-  renderGrid();
-});
-
-document.getElementById('pull-btn').addEventListener('click', ()=>{
-  if(items.length === 0){ return; }
-  const item = items[Math.floor(Math.random()*items.length)];
-  const person = people.find(p=>p.id===item.personId);
-  document.getElementById('modal-badge').textContent = 'Pulled from the drawer · ' + typeLabel(item.type);
-  document.getElementById('modal-title').textContent = item.title;
-  document.getElementById('modal-note').textContent = (item.note ? '"'+item.note+'" — ' : '') + 'filed under ' + (person ? person.name : 'Unsorted');
-  document.getElementById('modal-open').href = item.url;
-  document.getElementById('modal-overlay').classList.add('open');
-});
-document.getElementById('modal-close').addEventListener('click', ()=>{
-  document.getElementById('modal-overlay').classList.remove('open');
-});
-document.getElementById('modal-overlay').addEventListener('click', (e)=>{
-  if(e.target.id === 'modal-overlay') e.currentTarget.classList.remove('open');
-});
-
-function renderAll(){
-  renderPeopleDatalist();
-  renderGrid();
-}
-
-loadData();
-</script>
+<script src="script.js"></script>
 </body>
 </html>
