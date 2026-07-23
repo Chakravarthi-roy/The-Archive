@@ -205,8 +205,24 @@
   .pdf-title{ font-family:'Playfair Display', serif; font-weight:600; font-size:16px; color:var(--ink-teal); }
   .close-x{ background:none; border:none; color:var(--ink-soft); font-size:18px; cursor:pointer; padding:4px 8px; border-radius:50%; transition:background .12s ease, color .12s ease; }
   .close-x:hover{ background:var(--blush); color:var(--coral); }
-  .pdf-canvas-wrap{ background:var(--pale-blue); flex:1; display:flex; align-items:center; justify-content:center; padding:18px; }
-  .pdf-canvas-wrap iframe{ width:100%; height:65vh; border:none; background:#fff; box-shadow:var(--shadow-cool-deep); border-radius:4px; }
+  .pdf-canvas-wrap{ background:var(--pale-blue); flex:1; display:flex; align-items:center; justify-content:center; padding:24px; overflow:auto; min-height:300px; }
+  .pdf-canvas-wrap canvas{ box-shadow:var(--shadow-cool-deep); border-radius:4px; background:#fff; max-width:100%; }
+  .pdf-loading{ font-family:'DM Mono', monospace; font-size:12.5px; color:var(--ink-teal-soft); letter-spacing:.04em; }
+
+  .pdf-toolbar{
+    display:flex; align-items:center; justify-content:center; gap:14px; padding:14px 18px;
+    border-top:1.5px solid var(--line-cool); background:var(--card);
+  }
+  .pdf-nav-btn, .pdf-zoom-btn{
+    width:34px; height:34px; border-radius:50%; border:1.5px solid var(--line-cool); background:var(--pale-blue);
+    color:var(--teal); display:flex; align-items:center; justify-content:center; cursor:pointer;
+    font-family:'DM Mono'; font-size:15px; font-weight:600; transition:background .15s ease, transform .1s ease, border-color .15s ease;
+  }
+  .pdf-nav-btn:hover, .pdf-zoom-btn:hover{ background:var(--coral); border-color:var(--coral); color:#fff; transform:translateY(-1px); }
+  .pdf-nav-btn:disabled{ opacity:.35; cursor:default; }
+  .pdf-nav-btn:disabled:hover{ background:var(--pale-blue); border-color:var(--line-cool); color:var(--teal); transform:none; }
+  .pdf-page-info, .pdf-zoom-level{ font-family:'DM Mono', monospace; font-size:11.5px; color:var(--ink-teal-soft); min-width:56px; text-align:center; }
+  .pdf-toolbar-divider{ width:1.5px; height:22px; background:var(--line-cool); }
 
   /* Reading view modal (for text notes) */
   .reading-box{ background:var(--cream-warm); color:var(--ink); width:100%; max-width:600px; max-height:86vh; overflow-y:auto; border-radius:var(--r-lg); padding:38px 40px; position:relative; box-shadow:var(--shadow-warm-deep); }

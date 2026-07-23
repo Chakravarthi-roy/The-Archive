@@ -132,7 +132,23 @@
         <div class="pdf-title" id="pdf-modal-title">Document</div>
         <button class="close-x" id="pdf-modal-close">✕</button>
       </div>
-      <div class="pdf-canvas-wrap"><iframe id="pdf-modal-frame" src=""></iframe></div>
+      <div class="pdf-canvas-wrap" id="pdf-canvas-wrap">
+        <div class="pdf-loading" id="pdf-loading">Loading document…</div>
+        <canvas id="pdf-canvas" style="display:none;"></canvas>
+      </div>
+      <div class="pdf-toolbar">
+        <button class="pdf-nav-btn" id="pdf-prev" title="Previous page">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <span class="pdf-page-info" id="pdf-page-info">— / —</span>
+        <button class="pdf-nav-btn" id="pdf-next" title="Next page">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+        <span class="pdf-toolbar-divider"></span>
+        <button class="pdf-zoom-btn" id="pdf-zoom-out" title="Zoom out">−</button>
+        <span class="pdf-zoom-level" id="pdf-zoom-level">100%</span>
+        <button class="pdf-zoom-btn" id="pdf-zoom-in" title="Zoom in">+</button>
+      </div>
     </div>
   </div>
 
@@ -147,6 +163,7 @@
     </div>
   </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
