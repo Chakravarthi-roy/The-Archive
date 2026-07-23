@@ -59,34 +59,18 @@ function renderMarkdown(raw){
 }
 
 /* ---------- data ---------- */
-const demoPeople = [
-  {id:'p1', name:'MKBHD', img:'https://i.pravatar.cc/300?img=12', count:14},
-  {id:'p2', name:'Naval', img:'https://i.pravatar.cc/300?img=33', count:8},
-  {id:'p3', name:'Ali Abdaal', img:'https://i.pravatar.cc/300?img=51', count:21},
-  {id:'p4', name:'Veritasium', img:'https://i.pravatar.cc/300?img=8', count:5},
-  {id:'p5', name:'Lex Fridman', img:'https://i.pravatar.cc/300?img=59', count:11},
-  {id:'p6', name:'Paul Graham', img:'https://i.pravatar.cc/300?img=68', count:9},
-  {id:'p7', name:'Casey Neistat', img:'https://i.pravatar.cc/300?img=15', count:17}
-];
-const dummySeed = () => ({
-  links: [
-    {badge:'Video', title:'The camera setup that changed everything', meta:'12 min · filed 3 days ago', url:'https://www.youtube.com/'},
-    {badge:'Post', title:'Why most people quit right before it gets good', meta:'filed 1 week ago', url:'https://x.com/'},
-    {badge:'Article', title:'The real cost of moving fast', meta:'6 min read · filed 2 weeks ago', url:'https://medium.com/'}
-  ],
-  pdfs: [
-    {name:'notes-on-focus.pdf', size:'420 KB', url:'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'},
-    {name:'q3-essay-collection.pdf', size:'1.1 MB', url:'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'}
-  ],
-  notes: [
-    {title:'Line that stuck with me', body:'> "You are not behind. You are exactly where your decisions have taken you — which means your next decision matters more than your last one."\n\nWorth revisiting whenever I feel behind.'},
-    {title:'Idea for later', body:'## Compounding small reps\n\nRevisit the point about **compounding small public reps** — could apply this to how I practice writing.\n\n- Start a *weekly* public note\n- Stop waiting for a "finished" piece\n- Track it for a month before judging'}
-  ]
-});
-
 let people = [];
 let peopleData = {};
 const MAX_PHOTO_BYTES = 1.5 * 1024 * 1024;
+
+function makeInitialsAvatar(name){
+  const initial = (name.trim()[0] || '?').toUpperCase();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300">
+    <rect width="300" height="300" fill="#D4A373"/>
+    <text x="50%" y="53%" font-family="Georgia, serif" font-size="120" fill="#FFFDF8" text-anchor="middle" dominant-baseline="middle">${initial}</text>
+  </svg>`;
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
 
 async function loadState(){
   try{
@@ -95,9 +79,25 @@ async function loadState(){
     people = JSON.parse(p.value);
     peopleData = JSON.parse(c.value);
   }catch(e){
-    people = demoPeople.map(p=>({...p}));
-    peopleData = {};
-    people.forEach(p => peopleData[p.name] = dummySeed());
+    people = []; peopleData = {};
+    try{
+      const res = await fetch('data.json');
+      const json = await res.json();
+      if(json.people && json.people.length){
+        json.people.forEach(p=>{
+          const links = (p.links||[]).map(l=>({badge:l.type, title:l.title, meta:l.meta||'', url:l.url}));
+          const pdfs = (p.pdfs||[]).map(d=>({name:d.title, size:d.size||'', file:d.file}));
+          const notes = (p.notes||[]).map(n=>({title:n.title, body:n.body}));
+          people.push({
+            id:'p'+p.id, name:p.name, img: p.photo || makeInitialsAvatar(p.name),
+            count: links.length + pdfs.length + notes.length
+          });
+          peopleData[p.name] = {links, pdfs, notes};
+        });
+      }
+    }catch(err){
+      // data.json not reachable (likely opened via file:// instead of a local server) — start empty
+    }
     await saveState();
   }
 }
@@ -232,7 +232,10 @@ async function openPdfViewer(pdf){
   frame.src = '';
   if(currentPdfBlobUrl){ URL.revokeObjectURL(currentPdfBlobUrl); currentPdfBlobUrl = null; }
 
-  if(pdf.id){
+  if(pdf.file){
+    frame.src = pdf.file;
+    document.getElementById('pdf-modal-overlay').classList.add('open');
+  } else if(pdf.id){
     document.getElementById('pdf-modal-overlay').classList.add('open');
     frame.srcdoc = '<body style="font-family:sans-serif;color:#8C8370;display:flex;align-items:center;justify-content:center;height:100%;">Loading…</body>';
     try{
@@ -310,7 +313,7 @@ document.getElementById('ap-submit').addEventListener('click', async ()=>{
   const name = document.getElementById('ap-name').value.trim();
   if(!name) return;
   let photo = uploadedPhotoData || document.getElementById('ap-photo-url').value.trim();
-  if(!photo){ photo = 'https://i.pravatar.cc/300?img=' + (Math.floor(Math.random()*70)+1); }
+  if(!photo){ photo = makeInitialsAvatar(name); }
   const id = 'p' + Date.now();
   const newPerson = {id, name, img: photo, count: 0};
   people.push(newPerson);

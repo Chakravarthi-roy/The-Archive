@@ -1,0 +1,85 @@
+{
+  "people": [
+    {
+      "id": 1,
+      "name": "Anjali Viramgama",
+      "photo": "",
+      "links": [],
+      "pdfs": [
+        {
+          "title": "AI Engineer Roadmap",
+          "file": "static/pdfs/av_AIEngRoadmap.pdf"
+        },
+        {
+          "title": "Become a Better SWE",
+          "file": "static/pdfs/av_becomeBetterSWE.pdf"
+        },
+        {
+          "title": "Break Into Tech",
+          "file": "static/pdfs/av_breakIntoTech.pdf"
+        },
+        {
+          "title": "Crack the Interview",
+          "file": "static/pdfs/av_crackInterview.pdf"
+        },
+        {
+          "title": "Forward D Engineer",
+          "file": "static/pdfs/av_forwardDengineer.pdf"
+        },
+        {
+          "title": "Get Ahead of CS Students",
+          "file": "static/pdfs/av_getAheadofCSstudents.pdf"
+        },
+        {
+          "title": "Master Claude",
+          "file": "static/pdfs/av_masterClaude.pdf"
+        },
+        {
+          "title": "Master DP",
+          "file": "static/pdfs/av_masterDP.pdf"
+        },
+        {
+          "title": "Master SWE",
+          "file": "static/pdfs/av_masterSWE.pdf"
+        },
+        {
+          "title": "No Internship",
+          "file": "static/pdfs/av_noInternship.pdf"
+        },
+        {
+          "title": "PM Interview",
+          "file": "static/pdfs/av_PMinterview.pdf"
+        },
+        {
+          "title": "Projects Suggestions",
+          "file": "static/pdfs/av_projectsSuggestions.pdf"
+        },
+        {
+          "title": "Read Book",
+          "file": "static/pdfs/av_readBook.pdf"
+        },
+        {
+          "title": "Rest API",
+          "file": "static/pdfs/av_RestAPI.pdf"
+        },
+        {
+          "title": "System Design",
+          "file": "static/pdfs/av_systemDesign.pdf"
+        },
+        {
+          "title": "System Design Concepts",
+          "file": "static/pdfs/av_systemDesignConsepts.pdf"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "id": 2,
+      "name": "Aishwarya Srinivasan",
+      "photo": "",
+      "links": [],
+      "pdfs": [],
+      "notes": []
+    }
+  ]
+}
