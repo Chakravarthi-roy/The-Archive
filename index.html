@@ -37,26 +37,41 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
       Back
     </button>
+
     <div class="profile-head">
       <img class="profile-photo" id="detail-photo" src="" alt="">
-      <div>
-        <div class="profile-name" id="detail-name"></div>
-        <div class="profile-sub" id="detail-sub"></div>
+      <div class="profile-name" id="detail-name"></div>
+      <div class="profile-sub" id="detail-sub"></div>
+    </div>
+
+    <div class="detail-toolbar">
+      <div class="detail-search-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="detail-search" placeholder="Search links, notes, PDFs…">
+      </div>
+      <div class="action-row">
+        <button class="action-btn" id="btn-add-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>Add Link</button>
+        <button class="action-btn" id="btn-add-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"></path><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>Add Text</button>
+        <button class="action-btn" id="btn-add-pdf"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>Add PDF</button>
       </div>
     </div>
 
-    <div class="action-row">
-      <button class="action-btn" id="btn-add-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>Add Link</button>
-      <button class="action-btn" id="btn-add-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"></path><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>Add Text</button>
-      <button class="action-btn" id="btn-add-pdf"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>Add PDF</button>
-    </div>
-
     <div class="group-label">Links</div>
-    <div id="detail-links"></div>
-    <div class="group-label">PDFs</div>
-    <div id="detail-pdfs"></div>
-    <div class="group-label">Text &amp; Notes</div>
-    <div id="detail-notes"></div>
+    <div class="links-grid" id="detail-links"></div>
+
+    <div class="content-divider"></div>
+
+    <div class="split-section">
+      <div class="split-col split-col-left">
+        <div class="group-label">Text &amp; Notes</div>
+        <div id="detail-notes"></div>
+      </div>
+      <div class="split-line"></div>
+      <div class="split-col split-col-right">
+        <div class="group-label">PDFs</div>
+        <div id="detail-pdfs"></div>
+      </div>
+    </div>
   </div>
 
   <!-- ADD PERSON MODAL -->

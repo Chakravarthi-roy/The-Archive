@@ -180,15 +180,22 @@ belt.addEventListener('click', (e)=>{
 /* ---------- detail view ---------- */
 let currentPerson = null;
 
+let detailSearchQuery = '';
+function matchesSearch(text){
+  if(!detailSearchQuery) return true;
+  return (text||'').toLowerCase().includes(detailSearchQuery);
+}
+
 function renderLinks(){
   const arr = peopleData[currentPerson.id].links;
+  const filtered = arr.map((l,i)=>({...l, _i:i})).filter(l=> matchesSearch(l.title + ' ' + (l.badge||'')));
   const el = document.getElementById('detail-links');
-  el.innerHTML = arr.length ? arr.map((l,i)=>`
-    <div class="link-item type-${l.badge.toLowerCase()}" data-link="${i}">
+  el.innerHTML = filtered.length ? filtered.map(l=>`
+    <div class="link-item type-${l.badge.toLowerCase()}" data-link="${l._i}">
       <span class="link-badge type-${l.badge.toLowerCase()}">${l.badge}</span>
       <div class="link-title">${l.title}</div>
       <div class="link-meta">${l.meta}</div>
-    </div>`).join('') : `<div class="empty-group">No links yet.</div>`;
+    </div>`).join('') : `<div class="empty-group">${detailSearchQuery ? 'No links match your search.' : 'No links yet.'}</div>`;
   el.querySelectorAll('.link-item').forEach(item=> item.addEventListener('click', ()=>{
     const link = arr[parseInt(item.dataset.link)];
     if(link.url) window.open(link.url, '_blank', 'noopener');
@@ -196,28 +203,37 @@ function renderLinks(){
 }
 function renderPdfs(){
   const arr = peopleData[currentPerson.id].pdfs;
+  const filtered = arr.map((p,i)=>({...p, _i:i})).filter(p=> matchesSearch(p.name));
   const el = document.getElementById('detail-pdfs');
-  el.innerHTML = arr.length ? arr.map((p,i)=>`
-    <div class="pdf-item" data-pdf="${i}">
+  el.innerHTML = filtered.length ? filtered.map(p=>`
+    <div class="pdf-item" data-pdf="${p._i}">
       <span class="pdf-icon">📄</span>
       <div><div class="pdf-name">${p.name}</div><div class="pdf-size">${p.size}</div></div>
-    </div>`).join('') : `<div class="empty-group">No PDFs yet.</div>`;
+    </div>`).join('') : `<div class="empty-group">${detailSearchQuery ? 'No PDFs match your search.' : 'No PDFs yet.'}</div>`;
   el.querySelectorAll('.pdf-item').forEach(item=> item.addEventListener('click', ()=> openPdfViewer(arr[parseInt(item.dataset.pdf)])));
 }
 function renderNotes(){
   const arr = peopleData[currentPerson.id].notes;
+  const filtered = arr.map((n,i)=>({...n, _i:i})).filter(n=> matchesSearch(n.title + ' ' + n.body));
   const el = document.getElementById('detail-notes');
-  el.innerHTML = arr.length ? arr.map((n,i)=>`
-    <div class="note-item" data-note="${i}">
+  el.innerHTML = filtered.length ? filtered.map(n=>`
+    <div class="note-item" data-note="${n._i}">
       <div class="note-title">${n.title}</div>
       <div class="note-snippet">${n.body.replace(/[#>*_`\-]/g,'').slice(0,110)}</div>
       <div class="note-open-hint">Open reading view →</div>
-    </div>`).join('') : `<div class="empty-group">No text saved yet.</div>`;
+    </div>`).join('') : `<div class="empty-group">${detailSearchQuery ? 'No notes match your search.' : 'No text saved yet.'}</div>`;
   el.querySelectorAll('.note-item').forEach(item=> item.addEventListener('click', ()=> openReadingView(arr[parseInt(item.dataset.note)])));
 }
 
+document.getElementById('detail-search').addEventListener('input', (e)=>{
+  detailSearchQuery = e.target.value.trim().toLowerCase();
+  renderLinks(); renderPdfs(); renderNotes();
+});
+
 function openDetail(person){
   currentPerson = person; paused = true;
+  detailSearchQuery = '';
+  document.getElementById('detail-search').value = '';
   mainView.style.display = 'none'; detailView.classList.add('open');
   document.getElementById('detail-photo').src = person.img;
   document.getElementById('detail-name').textContent = person.name;
@@ -227,6 +243,7 @@ function openDetail(person){
 document.getElementById('back-btn').addEventListener('click', ()=>{
   detailView.classList.remove('open'); mainView.style.display='flex'; paused=false;
 });
+
 
 /* ---------- PDF viewer (pdf.js, canvas-rendered) ---------- */
 if(window.pdfjsLib){
