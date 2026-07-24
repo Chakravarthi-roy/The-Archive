@@ -195,7 +195,7 @@ function renderLinks(){
       <span class="link-badge type-${l.badge.toLowerCase()}">${l.badge}</span>
       <div class="link-title">${l.title}</div>
       <div class="link-meta">${l.meta}</div>
-    </div>`).join('') : `<div class="empty-group">${detailSearchQuery ? 'No links match your search.' : 'No links yet.'}</div>`;
+    </div>`).join('') : (detailSearchQuery ? `<div class="empty-group">No links match your search.</div>` : '');
   el.querySelectorAll('.link-item').forEach(item=> item.addEventListener('click', ()=>{
     const link = arr[parseInt(item.dataset.link)];
     if(link.url) window.open(link.url, '_blank', 'noopener');
@@ -209,7 +209,7 @@ function renderPdfs(){
     <div class="pdf-item" data-pdf="${p._i}">
       <span class="pdf-icon">📄</span>
       <div><div class="pdf-name">${p.name}</div><div class="pdf-size">${p.size}</div></div>
-    </div>`).join('') : `<div class="empty-group">${detailSearchQuery ? 'No PDFs match your search.' : 'No PDFs yet.'}</div>`;
+    </div>`).join('') : (detailSearchQuery ? `<div class="empty-group">No PDFs match your search.</div>` : '');
   el.querySelectorAll('.pdf-item').forEach(item=> item.addEventListener('click', ()=> openPdfViewer(arr[parseInt(item.dataset.pdf)])));
 }
 function renderNotes(){
@@ -221,8 +221,39 @@ function renderNotes(){
       <div class="note-title">${n.title}</div>
       <div class="note-snippet">${n.body.replace(/[#>*_`\-]/g,'').slice(0,110)}</div>
       <div class="note-open-hint">Open reading view →</div>
-    </div>`).join('') : `<div class="empty-group">${detailSearchQuery ? 'No notes match your search.' : 'No text saved yet.'}</div>`;
+    </div>`).join('') : (detailSearchQuery ? `<div class="empty-group">No notes match your search.</div>` : '');
   el.querySelectorAll('.note-item').forEach(item=> item.addEventListener('click', ()=> openReadingView(arr[parseInt(item.dataset.note)])));
+}
+
+/* Shows/hides whole sections based on whether the person actually has that
+   kind of content — links only appear if there are links, and the notes/pdf
+   split only shows the columns that have something, giving the lone column
+   the full width when the other is empty. Nothing here depends on search —
+   search only filters what's shown *inside* an already-visible section. */
+function updateLayout(){
+  const d = peopleData[currentPerson.id];
+  const hasLinks = d.links.length > 0;
+  const hasNotes = d.notes.length > 0;
+  const hasPdfs = d.pdfs.length > 0;
+
+  document.getElementById('links-section').style.display = hasLinks ? '' : 'none';
+
+  const splitSection = document.getElementById('split-section');
+  const notesCol = document.getElementById('notes-col');
+  const pdfsCol = document.getElementById('pdfs-col');
+  const splitLine = document.getElementById('split-line');
+
+  if(!hasNotes && !hasPdfs){
+    splitSection.style.display = 'none';
+  }else{
+    splitSection.style.display = 'grid';
+    notesCol.style.display = hasNotes ? '' : 'none';
+    pdfsCol.style.display = hasPdfs ? '' : 'none';
+    splitLine.style.display = (hasNotes && hasPdfs) ? '' : 'none';
+    splitSection.style.gridTemplateColumns = (hasNotes && hasPdfs) ? '1fr 1.5px 1fr' : '1fr';
+  }
+
+  document.getElementById('content-divider').style.display = (hasLinks && (hasNotes || hasPdfs)) ? '' : 'none';
 }
 
 document.getElementById('detail-search').addEventListener('input', (e)=>{
@@ -239,10 +270,12 @@ function openDetail(person){
   document.getElementById('detail-name').textContent = person.name;
   document.getElementById('detail-sub').textContent = countFor(person.id) + ' items filed';
   renderLinks(); renderPdfs(); renderNotes();
+  updateLayout();
 }
 document.getElementById('back-btn').addEventListener('click', ()=>{
   detailView.classList.remove('open'); mainView.style.display='flex'; paused=false;
 });
+
 
 
 /* ---------- PDF viewer (pdf.js, canvas-rendered) ---------- */
@@ -479,6 +512,7 @@ document.getElementById('ac-submit').addEventListener('click', async ()=>{
       renderPdfs();
     }
     currentPerson.count = countFor(currentPerson.id);
+    updateLayout();
     document.getElementById('detail-sub').textContent = currentPerson.count + ' items filed';
     addContentOverlay.classList.remove('open');
   }catch(e){
