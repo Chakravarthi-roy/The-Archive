@@ -59,9 +59,11 @@ function renderMarkdown(raw){
 }
 
 /* ---------- data ---------- */
-let people = [];
-let peopleData = {};
+let people = [];       // [{id, name, img, count}]
+let peopleData = {};   // { [personId]: {links, pdfs, notes} }
 const MAX_PHOTO_BYTES = 1.5 * 1024 * 1024;
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 function makeInitialsAvatar(name){
   const initial = (name.trim()[0] || '?').toUpperCase();
@@ -72,40 +74,41 @@ function makeInitialsAvatar(name){
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
 }
 
-async function loadState(){
-  try{
-    const p = await window.storage.get('carousel-people', false);
-    const c = await window.storage.get('carousel-content', false);
-    people = JSON.parse(p.value);
-    peopleData = JSON.parse(c.value);
-  }catch(e){
-    people = []; peopleData = {};
-    try{
-      const res = await fetch('data.json');
-      const json = await res.json();
-      if(json.people && json.people.length){
-        json.people.forEach(p=>{
-          const links = (p.links||[]).map(l=>({badge:l.type, title:l.title, meta:l.meta||'', url:l.url}));
-          const pdfs = (p.pdfs||[]).map(d=>({name:d.title, size:d.size||'', file:d.file}));
-          const notes = (p.notes||[]).map(n=>({title:n.title, body:n.body}));
-          people.push({
-            id:'p'+p.id, name:p.name, img: p.photo || makeInitialsAvatar(p.name),
-            count: links.length + pdfs.length + notes.length
-          });
-          peopleData[p.name] = {links, pdfs, notes};
-        });
-      }
-    }catch(err){
-      // data.json not reachable (likely opened via file:// instead of a local server) — start empty
-    }
-    await saveState();
-  }
+function countFor(personId){
+  const d = peopleData[personId];
+  if(!d) return 0;
+  return d.links.length + d.pdfs.length + d.notes.length;
 }
-async function saveState(){
-  try{
-    await window.storage.set('carousel-people', JSON.stringify(people), false);
-    await window.storage.set('carousel-content', JSON.stringify(peopleData), false);
-  }catch(e){ console.error('save failed', e); }
+
+/* Loads everything from Supabase. */
+async function loadState(){
+  people = []; peopleData = {};
+  const { data: peopleRows, error: peopleErr } = await sb.from('people').select('*').order('created_at');
+  if(peopleErr){ console.error('Could not load people from Supabase', peopleErr); return; }
+
+  const ids = peopleRows.map(p=>p.id);
+  const [{ data: linkRows }, { data: pdfRows }, { data: noteRows }] = ids.length ? await Promise.all([
+    sb.from('links').select('*').in('person_id', ids).order('created_at', {ascending:false}),
+    sb.from('pdfs').select('*').in('person_id', ids).order('created_at', {ascending:false}),
+    sb.from('notes').select('*').in('person_id', ids).order('created_at', {ascending:false}),
+  ]) : [{data:[]},{data:[]},{data:[]}];
+
+  peopleRows.forEach(p=>{ peopleData[p.id] = {links:[], pdfs:[], notes:[]}; });
+  (linkRows||[]).forEach(l=> peopleData[l.person_id] && peopleData[l.person_id].links.push(l));
+  (pdfRows||[]).forEach(d=> peopleData[d.person_id] && peopleData[d.person_id].pdfs.push(d));
+  (noteRows||[]).forEach(n=> peopleData[n.person_id] && peopleData[n.person_id].notes.push(n));
+
+  people = peopleRows.map(p=> ({ id:p.id, name:p.name, img:p.img || makeInitialsAvatar(p.name), count: countFor(p.id) }));
+}
+
+/* Uploads a File to a Supabase Storage bucket and returns its public URL. */
+async function uploadToBucket(bucket, file, pathPrefix){
+  const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const path = `${pathPrefix}/${Date.now()}-${cleanName}`;
+  const { error } = await sb.storage.from(bucket).upload(path, file);
+  if(error) throw error;
+  const { data } = sb.storage.from(bucket).getPublicUrl(path);
+  return { path, publicUrl: data.publicUrl };
 }
 
 /* ---------- belt ---------- */
@@ -150,8 +153,9 @@ function render(){
     el.style.transform = `translate(-50%,-50%) translateX(${x}px) translateZ(${z}px) rotateY(${rotY}deg) scale(${scale})`;
     el.style.opacity = opacity; el.style.zIndex = zIndex;
   });
-  frontName.textContent = people[frontIdx] ? people[frontIdx].name : 'Add someone new';
-  frontCount.textContent = people[frontIdx] ? (people[frontIdx].count + ' filed') : 'tap to add a person';
+  const fp = people[frontIdx];
+  frontName.textContent = fp ? fp.name : 'Add someone new';
+  frontCount.textContent = fp ? (countFor(fp.id) + ' filed') : 'tap to add a person';
 }
 function tick(now){
   if(state==='hold'){ if(!paused && now>=holdUntil) startMove(1); }
@@ -177,7 +181,7 @@ belt.addEventListener('click', (e)=>{
 let currentPerson = null;
 
 function renderLinks(){
-  const arr = peopleData[currentPerson.name].links;
+  const arr = peopleData[currentPerson.id].links;
   const el = document.getElementById('detail-links');
   el.innerHTML = arr.length ? arr.map((l,i)=>`
     <div class="link-item type-${l.badge.toLowerCase()}" data-link="${i}">
@@ -191,7 +195,7 @@ function renderLinks(){
   }));
 }
 function renderPdfs(){
-  const arr = peopleData[currentPerson.name].pdfs;
+  const arr = peopleData[currentPerson.id].pdfs;
   const el = document.getElementById('detail-pdfs');
   el.innerHTML = arr.length ? arr.map((p,i)=>`
     <div class="pdf-item" data-pdf="${i}">
@@ -201,7 +205,7 @@ function renderPdfs(){
   el.querySelectorAll('.pdf-item').forEach(item=> item.addEventListener('click', ()=> openPdfViewer(arr[parseInt(item.dataset.pdf)])));
 }
 function renderNotes(){
-  const arr = peopleData[currentPerson.name].notes;
+  const arr = peopleData[currentPerson.id].notes;
   const el = document.getElementById('detail-notes');
   el.innerHTML = arr.length ? arr.map((n,i)=>`
     <div class="note-item" data-note="${i}">
@@ -217,7 +221,7 @@ function openDetail(person){
   mainView.style.display = 'none'; detailView.classList.add('open');
   document.getElementById('detail-photo').src = person.img;
   document.getElementById('detail-name').textContent = person.name;
-  document.getElementById('detail-sub').textContent = person.count + ' items filed';
+  document.getElementById('detail-sub').textContent = countFor(person.id) + ' items filed';
   renderLinks(); renderPdfs(); renderNotes();
 }
 document.getElementById('back-btn').addEventListener('click', ()=>{
@@ -242,19 +246,11 @@ async function openPdfViewer(pdf){
   updatePdfZoomLabel();
 
   try{
-    let source;
-    if(pdf.file){
-      source = { url: pdf.file };
-    } else if(pdf.id){
-      const data = await window.storage.get('pdf:' + pdf.id, false);
-      const byteChars = atob(data.value);
-      const byteNumbers = new Uint8Array(byteChars.length);
-      for(let i=0;i<byteChars.length;i++){ byteNumbers[i] = byteChars.charCodeAt(i); }
-      source = { data: byteNumbers };
-    } else {
-      source = { url: pdf.url };
+    let fileUrl = pdf.url;
+    if(!fileUrl && pdf.storage_path){
+      fileUrl = sb.storage.from('pdfs').getPublicUrl(pdf.storage_path).data.publicUrl;
     }
-    pdfDoc = await pdfjsLib.getDocument(source).promise;
+    pdfDoc = await pdfjsLib.getDocument({ url: fileUrl }).promise;
     loading.style.display = 'none';
     canvas.style.display = 'block';
     renderPdfPage(1);
@@ -316,14 +312,14 @@ document.getElementById('reading-overlay').addEventListener('click', (e)=>{ if(e
 
 /* ---------- add person modal ---------- */
 const addPersonOverlay = document.getElementById('add-person-overlay');
-let uploadedPhotoData = null;
+let uploadedPhotoFile = null;
 function openAddPersonModal(){
   document.getElementById('ap-name').value='';
   document.getElementById('ap-photo-url').value='';
   document.getElementById('ap-photo-file').value='';
   document.getElementById('ap-preview').style.display='none';
   document.getElementById('ap-upload-label').textContent='Click to upload a photo';
-  uploadedPhotoData = null;
+  uploadedPhotoFile = null;
   addPersonOverlay.classList.add('open');
 }
 document.getElementById('ap-upload-zone').addEventListener('click', ()=> document.getElementById('ap-photo-file').click());
@@ -333,10 +329,10 @@ document.getElementById('ap-photo-file').addEventListener('change', (e)=>{
   const thumb = document.getElementById('ap-preview');
   if(!file) return;
   if(file.size > MAX_PHOTO_BYTES){ label.textContent = 'Too large — try a smaller image (max 1.5MB)'; return; }
+  uploadedPhotoFile = file;
   const reader = new FileReader();
   reader.onload = ()=>{
-    uploadedPhotoData = reader.result;
-    thumb.src = uploadedPhotoData; thumb.style.display='inline-block';
+    thumb.src = reader.result; thumb.style.display='inline-block';
     label.textContent = file.name;
     document.getElementById('ap-photo-url').value = '';
   };
@@ -345,23 +341,38 @@ document.getElementById('ap-photo-file').addEventListener('change', (e)=>{
 document.getElementById('ap-photo-url').addEventListener('input', (e)=>{
   const url = e.target.value.trim();
   const thumb = document.getElementById('ap-preview');
-  if(url){ uploadedPhotoData = null; thumb.src = url; thumb.style.display='inline-block'; }
-  else if(!uploadedPhotoData){ thumb.style.display='none'; }
+  if(url){ uploadedPhotoFile = null; thumb.src = url; thumb.style.display='inline-block'; }
+  else if(!uploadedPhotoFile){ thumb.style.display='none'; }
 });
 document.getElementById('ap-cancel').addEventListener('click', ()=> addPersonOverlay.classList.remove('open'));
 addPersonOverlay.addEventListener('click', (e)=>{ if(e.target.id==='add-person-overlay') addPersonOverlay.classList.remove('open'); });
 document.getElementById('ap-submit').addEventListener('click', async ()=>{
   const name = document.getElementById('ap-name').value.trim();
   if(!name) return;
-  let photo = uploadedPhotoData || document.getElementById('ap-photo-url').value.trim();
-  if(!photo){ photo = makeInitialsAvatar(name); }
-  const id = 'p' + Date.now();
-  const newPerson = {id, name, img: photo, count: 0};
-  people.push(newPerson);
-  peopleData[name] = {links:[], pdfs:[], notes:[]};
-  rebuildBelt();
-  await saveState();
-  addPersonOverlay.classList.remove('open');
+  const submitBtn = document.getElementById('ap-submit');
+  submitBtn.disabled = true; submitBtn.textContent = 'Adding…';
+  try{
+    let photo = document.getElementById('ap-photo-url').value.trim() || null;
+    if(uploadedPhotoFile){
+      const { publicUrl } = await uploadToBucket('avatars', uploadedPhotoFile, 'avatars');
+      photo = publicUrl;
+    }
+    if(!photo) photo = makeInitialsAvatar(name);
+
+    const { data: newPerson, error } = await sb.from('people')
+      .insert({ name, img: photo }).select().single();
+    if(error) throw error;
+
+    people.push({ id:newPerson.id, name, img:photo, count:0 });
+    peopleData[newPerson.id] = {links:[], pdfs:[], notes:[]};
+    rebuildBelt();
+    addPersonOverlay.classList.remove('open');
+  }catch(e){
+    console.error('add person failed', e);
+    alert("Couldn't add this person — check your connection and Supabase setup.");
+  }finally{
+    submitBtn.disabled = false; submitBtn.textContent = 'Add';
+  }
 });
 
 /* ---------- add content modal ---------- */
@@ -370,14 +381,6 @@ let activeContentType = 'link';
 let selectedPdfFile = null;
 const MAX_PDF_BYTES = 3.5 * 1024 * 1024;
 function fmtSize(bytes){ if(bytes < 1024*1024) return Math.round(bytes/1024) + ' KB'; return (bytes/(1024*1024)).toFixed(1) + ' MB'; }
-function readFileAsBase64(file){
-  return new Promise((resolve, reject)=>{
-    const reader = new FileReader();
-    reader.onload = ()=> resolve(reader.result.split(',')[1]);
-    reader.onerror = ()=> reject(new Error('read failed'));
-    reader.readAsDataURL(file);
-  });
-}
 
 document.getElementById('ac-pdf-upload-zone').addEventListener('click', ()=> document.getElementById('ac-pdf-file').click());
 document.getElementById('ac-pdf-file').addEventListener('change', (e)=>{
@@ -429,32 +432,45 @@ document.getElementById('ac-cancel').addEventListener('click', ()=> addContentOv
 addContentOverlay.addEventListener('click', (e)=>{ if(e.target.id==='add-content-overlay') addContentOverlay.classList.remove('open'); });
 document.getElementById('ac-submit').addEventListener('click', async ()=>{
   if(!currentPerson) return;
-  const data = peopleData[currentPerson.name];
-  const status = document.getElementById('ac-heading');
-  if(activeContentType==='link'){
-    const title = document.getElementById('ac-link-title').value.trim(); if(!title) return;
-    const url = document.getElementById('ac-link-url').value.trim();
-    data.links.unshift({badge:selectedLinkType, title, meta:'filed just now', url: url || '#'});
-    renderLinks();
-  } else if(activeContentType==='text'){
-    const title = document.getElementById('ac-text-title').value.trim() || 'Untitled';
-    const body = document.getElementById('ac-text-body').value.trim(); if(!body) return;
-    data.notes.unshift({title, body});
-    renderNotes();
-  } else if(activeContentType==='pdf'){
-    if(!selectedPdfFile) return;
-    const id = 'pdf' + Date.now();
-    try{
-      const base64 = await readFileAsBase64(selectedPdfFile);
-      await window.storage.set('pdf:' + id, base64, false);
-    }catch(e){ document.getElementById('ac-pdf-upload-label').textContent = 'Could not read the file — try again.'; return; }
-    data.pdfs.unshift({name: selectedPdfFile.name, size: fmtSize(selectedPdfFile.size), id});
-    renderPdfs();
+  const data = peopleData[currentPerson.id];
+  const submitBtn = document.getElementById('ac-submit');
+  submitBtn.disabled = true; submitBtn.textContent = 'Adding…';
+  try{
+    if(activeContentType==='link'){
+      const title = document.getElementById('ac-link-title').value.trim(); if(!title){ submitBtn.disabled=false; submitBtn.textContent='Add'; return; }
+      const url = document.getElementById('ac-link-url').value.trim();
+      const row = { person_id: currentPerson.id, badge: selectedLinkType, title, meta: 'filed just now', url: url || '#' };
+      const { data: inserted, error } = await sb.from('links').insert(row).select().single();
+      if(error) throw error;
+      data.links.unshift(inserted);
+      renderLinks();
+    } else if(activeContentType==='text'){
+      const title = document.getElementById('ac-text-title').value.trim() || 'Untitled';
+      const body = document.getElementById('ac-text-body').value.trim(); if(!body){ submitBtn.disabled=false; submitBtn.textContent='Add'; return; }
+      const row = { person_id: currentPerson.id, title, body };
+      const { data: inserted, error } = await sb.from('notes').insert(row).select().single();
+      if(error) throw error;
+      data.notes.unshift(inserted);
+      renderNotes();
+    } else if(activeContentType==='pdf'){
+      if(!selectedPdfFile){ submitBtn.disabled=false; submitBtn.textContent='Add'; return; }
+      const { path } = await uploadToBucket('pdfs', selectedPdfFile, currentPerson.id);
+      const row = { person_id: currentPerson.id, name: selectedPdfFile.name, size: fmtSize(selectedPdfFile.size), storage_path: path };
+      const { data: inserted, error } = await sb.from('pdfs').insert(row).select().single();
+      if(error) throw error;
+      data.pdfs.unshift(inserted);
+      renderPdfs();
+    }
+    currentPerson.count = countFor(currentPerson.id);
+    document.getElementById('detail-sub').textContent = currentPerson.count + ' items filed';
+    addContentOverlay.classList.remove('open');
+  }catch(e){
+    console.error('add content failed', e);
+    document.getElementById('ac-pdf-upload-label').textContent = 'Something went wrong — check your connection.';
+    alert("Couldn't save that — check your connection and Supabase setup.");
+  }finally{
+    submitBtn.disabled = false; submitBtn.textContent = 'Add';
   }
-  currentPerson.count++;
-  document.getElementById('detail-sub').textContent = currentPerson.count + ' items filed';
-  await saveState();
-  addContentOverlay.classList.remove('open');
 });
 
 /* ---------- init ---------- */
