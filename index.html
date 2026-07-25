@@ -150,7 +150,10 @@
         <button class="close-x" id="pdf-modal-close">✕</button>
       </div>
       <div class="pdf-canvas-wrap" id="pdf-canvas-wrap">
-        <div class="pdf-loading" id="pdf-loading">Loading document…</div>
+        <div class="pdf-loading" id="pdf-loading">
+          <div id="pdf-loading-text">Loading document…</div>
+          <button class="pdf-fix-btn" id="pdf-remove-broken" style="display:none;">Remove this broken entry</button>
+        </div>
         <canvas id="pdf-canvas" style="display:none;"></canvas>
       </div>
       <div class="pdf-toolbar">

@@ -289,25 +289,62 @@ async function openPdfViewer(pdf){
   document.getElementById('pdf-modal-overlay').classList.add('open');
   const canvas = document.getElementById('pdf-canvas');
   const loading = document.getElementById('pdf-loading');
+  const loadingText = document.getElementById('pdf-loading-text');
+  const removeBtn = document.getElementById('pdf-remove-broken');
   canvas.style.display = 'none';
   loading.style.display = 'block';
-  loading.textContent = 'Loading document…';
+  loadingText.textContent = 'Loading document…';
+  removeBtn.style.display = 'none';
   pdfDoc = null; pdfPageNum = 1; pdfScale = 1.1;
   updatePdfZoomLabel();
 
+  let fileUrl = pdf.url;
+  if(!fileUrl && pdf.storage_path){
+    fileUrl = sb.storage.from('pdfs').getPublicUrl(pdf.storage_path).data.publicUrl;
+  }
+
+  // Old data.json-era rows stored a relative path (e.g. "static/pdfs/name.pdf")
+  // instead of a real URL — those files no longer exist anywhere.
+  const isBrokenRelativePath = fileUrl && !/^https?:\/\//i.test(fileUrl);
+
+  if(!fileUrl || isBrokenRelativePath){
+    loading.style.display = 'block';
+    loadingText.textContent = "This PDF's file is missing — it points to an old file path that no longer exists (from before this site used real file storage). You'll need to re-upload it via \"Add PDF\" if you still have the original file.";
+    removeBtn.style.display = 'inline-block';
+    removeBtn.onclick = ()=> removeBrokenPdf(pdf);
+    return;
+  }
+
   try{
-    let fileUrl = pdf.url;
-    if(!fileUrl && pdf.storage_path){
-      fileUrl = sb.storage.from('pdfs').getPublicUrl(pdf.storage_path).data.publicUrl;
-    }
     pdfDoc = await pdfjsLib.getDocument({ url: fileUrl }).promise;
     loading.style.display = 'none';
     canvas.style.display = 'block';
     renderPdfPage(1);
   }catch(e){
     loading.style.display = 'block';
-    loading.textContent = "Couldn't load this PDF.";
+    loadingText.textContent = "Couldn't load this PDF — the file may be missing or unreachable.";
     document.getElementById('pdf-page-info').textContent = '— / —';
+    removeBtn.style.display = 'inline-block';
+    removeBtn.onclick = ()=> removeBrokenPdf(pdf);
+  }
+}
+
+async function removeBrokenPdf(pdf){
+  const removeBtn = document.getElementById('pdf-remove-broken');
+  removeBtn.disabled = true; removeBtn.textContent = 'Removing…';
+  try{
+    const { error } = await sb.from('pdfs').delete().eq('id', pdf.id);
+    if(error) throw error;
+    const arr = peopleData[currentPerson.id].pdfs;
+    const idx = arr.findIndex(p=> p.id === pdf.id);
+    if(idx > -1) arr.splice(idx, 1);
+    renderPdfs();
+    updateLayout();
+    document.getElementById('pdf-modal-overlay').classList.remove('open');
+  }catch(e){
+    console.error('failed to remove broken pdf', e);
+    removeBtn.disabled = false; removeBtn.textContent = 'Remove this broken entry';
+    alert("Couldn't remove that entry — check your connection and try again.");
   }
 }
 

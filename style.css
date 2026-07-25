@@ -232,7 +232,14 @@
   .close-x:hover{ background:var(--blush); color:var(--coral); }
   .pdf-canvas-wrap{ background:var(--pale-blue); flex:1; display:flex; align-items:center; justify-content:center; padding:24px; overflow:auto; min-height:300px; }
   .pdf-canvas-wrap canvas{ box-shadow:var(--shadow-cool-deep); border-radius:4px; background:#fff; max-width:100%; }
-  .pdf-loading{ font-family:'DM Mono', monospace; font-size:12.5px; color:var(--ink-teal-soft); letter-spacing:.04em; }
+  .pdf-loading{ font-family:'DM Mono', monospace; font-size:12.5px; color:var(--ink-teal-soft); letter-spacing:.04em; display:flex; flex-direction:column; align-items:center; gap:16px; max-width:360px; text-align:center; line-height:1.6; }
+  .pdf-fix-btn{
+    font-family:'DM Mono', monospace; font-size:11px; letter-spacing:.04em; text-transform:uppercase;
+    background:var(--blush); border:1.5px solid var(--coral); color:var(--coral); padding:10px 18px;
+    border-radius:20px; cursor:pointer; transition:background .15s ease, transform .12s ease;
+  }
+  .pdf-fix-btn:hover{ background:var(--coral); color:#fff; transform:translateY(-1px); }
+  .pdf-fix-btn:disabled{ opacity:.6; cursor:default; transform:none; }
 
   .pdf-toolbar{
     display:flex; align-items:center; justify-content:center; gap:14px; padding:14px 18px;
