@@ -58,6 +58,13 @@ function renderMarkdown(raw){
   return html;
 }
 
+/* Lets a single-line input submit its form on Enter (not just via button click). */
+function enterSubmits(inputEl, submitFn){
+  inputEl.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){ e.preventDefault(); submitFn(); }
+  });
+}
+
 /* ---------- data ---------- */
 let people = [];       // [{id, name, img, count}]
 let peopleData = {};   // { [personId]: {links, pdfs, notes} }
@@ -207,7 +214,7 @@ function renderPdfs(){
   const el = document.getElementById('detail-pdfs');
   el.innerHTML = filtered.length ? filtered.map(p=>`
     <div class="pdf-item" data-pdf="${p._i}">
-      <button class="item-delete-btn" data-delete-pdf="${p._i}" title="Delete this PDF" aria-label="Delete this PDF">✕</button>
+      <button class="item-delete-btn" data-delete-pdf="${p._i}" title="Delete this PDF" aria-label="Delete this PDF"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>
       <span class="pdf-icon">📄</span>
       <div><div class="pdf-name">${p.name}</div><div class="pdf-size">${p.size}</div></div>
     </div>`).join('') : (detailSearchQuery ? `<div class="empty-group">No PDFs match your search.</div>` : '');
@@ -427,7 +434,12 @@ document.getElementById('reading-overlay').addEventListener('click', (e)=>{ if(e
 /* ---------- add person modal ---------- */
 const addPersonOverlay = document.getElementById('add-person-overlay');
 let uploadedPhotoFile = null;
+let editingPersonId = null; // null = adding a new person; set = editing an existing one
+
 function openAddPersonModal(){
+  editingPersonId = null;
+  document.getElementById('ap-heading').textContent = 'Add someone new';
+  document.getElementById('ap-submit').textContent = 'Add';
   document.getElementById('ap-name').value='';
   document.getElementById('ap-photo-url').value='';
   document.getElementById('ap-photo-file').value='';
@@ -436,6 +448,22 @@ function openAddPersonModal(){
   uploadedPhotoFile = null;
   addPersonOverlay.classList.add('open');
 }
+function openEditPersonModal(person){
+  editingPersonId = person.id;
+  document.getElementById('ap-heading').textContent = 'Edit ' + person.name;
+  document.getElementById('ap-submit').textContent = 'Save';
+  document.getElementById('ap-name').value = person.name;
+  document.getElementById('ap-photo-url').value = '';
+  document.getElementById('ap-photo-file').value = '';
+  document.getElementById('ap-preview').src = person.img;
+  document.getElementById('ap-preview').style.display = 'inline-block';
+  document.getElementById('ap-upload-label').textContent = 'Click to upload a new photo';
+  uploadedPhotoFile = null;
+  addPersonOverlay.classList.add('open');
+}
+document.getElementById('btn-edit-person').addEventListener('click', ()=>{
+  if(currentPerson) openEditPersonModal(currentPerson);
+});
 document.getElementById('ap-upload-zone').addEventListener('click', ()=> document.getElementById('ap-photo-file').click());
 document.getElementById('ap-photo-file').addEventListener('change', (e)=>{
   const file = e.target.files[0];
@@ -460,34 +488,51 @@ document.getElementById('ap-photo-url').addEventListener('input', (e)=>{
 });
 document.getElementById('ap-cancel').addEventListener('click', ()=> addPersonOverlay.classList.remove('open'));
 addPersonOverlay.addEventListener('click', (e)=>{ if(e.target.id==='add-person-overlay') addPersonOverlay.classList.remove('open'); });
-document.getElementById('ap-submit').addEventListener('click', async ()=>{
+
+async function submitPersonForm(){
   const name = document.getElementById('ap-name').value.trim();
   if(!name) return;
   const submitBtn = document.getElementById('ap-submit');
-  submitBtn.disabled = true; submitBtn.textContent = 'Adding…';
+  const wasEditing = !!editingPersonId;
+  submitBtn.disabled = true; submitBtn.textContent = wasEditing ? 'Saving…' : 'Adding…';
   try{
     let photo = document.getElementById('ap-photo-url').value.trim() || null;
     if(uploadedPhotoFile){
       const { publicUrl } = await uploadToBucket('avatars', uploadedPhotoFile, 'avatars');
       photo = publicUrl;
     }
-    if(!photo) photo = makeInitialsAvatar(name);
+    if(!photo) photo = wasEditing ? currentPerson.img : makeInitialsAvatar(name);
 
-    const { data: newPerson, error } = await sb.from('people')
-      .insert({ name, img: photo }).select().single();
-    if(error) throw error;
-
-    people.push({ id:newPerson.id, name, img:photo, count:0 });
-    peopleData[newPerson.id] = {links:[], pdfs:[], notes:[]};
-    rebuildBelt();
+    if(wasEditing){
+      const { error } = await sb.from('people').update({ name, img: photo }).eq('id', editingPersonId);
+      if(error) throw error;
+      const p = people.find(p=> p.id === editingPersonId);
+      if(p){ p.name = name; p.img = photo; }
+      if(currentPerson && currentPerson.id === editingPersonId){
+        currentPerson.name = name; currentPerson.img = photo;
+        document.getElementById('detail-photo').src = photo;
+        document.getElementById('detail-name').textContent = name;
+      }
+      rebuildBelt();
+    }else{
+      const { data: newPerson, error } = await sb.from('people')
+        .insert({ name, img: photo }).select().single();
+      if(error) throw error;
+      people.push({ id:newPerson.id, name, img:photo, count:0 });
+      peopleData[newPerson.id] = {links:[], pdfs:[], notes:[]};
+      rebuildBelt();
+    }
     addPersonOverlay.classList.remove('open');
   }catch(e){
-    console.error('add person failed', e);
-    alert("Couldn't add this person — check your connection and Supabase setup.");
+    console.error('save person failed', e);
+    alert("Couldn't save — check your connection and Supabase setup.");
   }finally{
-    submitBtn.disabled = false; submitBtn.textContent = 'Add';
+    submitBtn.disabled = false; submitBtn.textContent = wasEditing ? 'Save' : 'Add';
   }
-});
+}
+document.getElementById('ap-submit').addEventListener('click', submitPersonForm);
+enterSubmits(document.getElementById('ap-name'), submitPersonForm);
+enterSubmits(document.getElementById('ap-photo-url'), submitPersonForm);
 
 /* ---------- add content modal ---------- */
 const addContentOverlay = document.getElementById('add-content-overlay');
@@ -544,7 +589,7 @@ document.getElementById('btn-add-text').addEventListener('click', ()=> openConte
 document.getElementById('btn-add-pdf').addEventListener('click', ()=> openContentModal('pdf'));
 document.getElementById('ac-cancel').addEventListener('click', ()=> addContentOverlay.classList.remove('open'));
 addContentOverlay.addEventListener('click', (e)=>{ if(e.target.id==='add-content-overlay') addContentOverlay.classList.remove('open'); });
-document.getElementById('ac-submit').addEventListener('click', async ()=>{
+async function submitContentForm(){
   if(!currentPerson) return;
   const data = peopleData[currentPerson.id];
   const submitBtn = document.getElementById('ac-submit');
@@ -586,6 +631,15 @@ document.getElementById('ac-submit').addEventListener('click', async ()=>{
   }finally{
     submitBtn.disabled = false; submitBtn.textContent = 'Add';
   }
+}
+document.getElementById('ac-submit').addEventListener('click', submitContentForm);
+enterSubmits(document.getElementById('ac-link-title'), submitContentForm);
+enterSubmits(document.getElementById('ac-link-url'), submitContentForm);
+enterSubmits(document.getElementById('ac-text-title'), submitContentForm);
+// Note: ac-text-body is a textarea — Enter there creates a new line as expected,
+// it does not submit the form (use Cmd/Ctrl+Enter for that instead).
+document.getElementById('ac-text-body').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter' && (e.metaKey || e.ctrlKey)){ e.preventDefault(); submitContentForm(); }
 });
 
 /* ---------- init ---------- */

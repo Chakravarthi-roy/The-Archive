@@ -39,7 +39,12 @@
     </button>
 
     <div class="profile-head">
-      <img class="profile-photo" id="detail-photo" src="" alt="">
+      <div class="profile-photo-wrap">
+        <img class="profile-photo" id="detail-photo" src="" alt="">
+        <button class="profile-edit-btn" id="btn-edit-person" title="Edit name/photo" aria-label="Edit name/photo">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+        </button>
+      </div>
       <div class="profile-name" id="detail-name"></div>
       <div class="profile-sub" id="detail-sub"></div>
     </div>
@@ -79,7 +84,7 @@
   <!-- ADD PERSON MODAL -->
   <div class="overlay" id="add-person-overlay">
     <div class="modal-box box">
-      <h3>Add someone new</h3>
+      <h3 id="ap-heading">Add someone new</h3>
       <label for="ap-name">Name</label>
       <input type="text" id="ap-name" placeholder="e.g. Marques Brownlee">
 
@@ -89,9 +94,8 @@
         <span class="upload-label" id="ap-upload-label">Click to upload a photo</span>
       </div>
       <div class="or-divider">or</div>
-      <input type="text" id="ap-photo-url" placeholder="Paste an image link, or static/photos/name.jpg">
+      <input type="text" id="ap-photo-url" placeholder="Paste an image link">
       <img class="preview-thumb" id="ap-preview">
-      <div class="field-note">Upload saves the photo inside the app. Or drop a file into the static/photos folder yourself and type its path above.</div>
 
       <div class="modal-actions">
         <button class="modal-cancel" id="ap-cancel">Cancel</button>
