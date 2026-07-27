@@ -235,6 +235,9 @@
     box-shadow:0 6px 16px rgba(226,149,120,.4); transition:transform .12s ease;
   }
   .modal-submit:hover{ transform:translateY(-2px); }
+  .confirm-box{ max-width:380px; }
+  .confirm-message{ font-family:'DM Sans'; font-size:13.5px; color:var(--ink-soft); line-height:1.55; margin-top:4px; }
+  .confirm-danger{ background:linear-gradient(135deg, #E25C5C, #C94040); box-shadow:0 6px 16px rgba(201,64,64,.35); }
 
   /* PDF viewer modal */
   .pdf-box{ background:var(--card); border:1.5px solid var(--line-cool); border-radius:var(--r-lg); width:100%; max-width:700px; max-height:88vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:var(--shadow-cool-deep); }

@@ -65,6 +65,42 @@ function enterSubmits(inputEl, submitFn){
   });
 }
 
+/* Styled confirm modal (replaces window.confirm). Resolves true/false. */
+const confirmOverlay = document.getElementById('confirm-overlay');
+let confirmResolve = null;
+function showConfirm({title = 'Are you sure?', message = '', confirmText = 'Delete'} = {}){
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-message').textContent = message;
+  document.getElementById('confirm-ok').textContent = confirmText;
+  confirmOverlay.classList.add('open');
+  return new Promise(resolve=>{ confirmResolve = resolve; });
+}
+function resolveConfirm(result){
+  if(confirmResolve){ confirmResolve(result); confirmResolve = null; }
+  confirmOverlay.classList.remove('open');
+}
+document.getElementById('confirm-ok').addEventListener('click', ()=> resolveConfirm(true));
+document.getElementById('confirm-cancel').addEventListener('click', ()=> resolveConfirm(false));
+confirmOverlay.addEventListener('click', (e)=>{ if(e.target.id==='confirm-overlay') resolveConfirm(false); });
+
+/* Esc closes whichever modal is currently open (topmost priority first).
+   Enter confirms the confirm-modal specifically, since it has no text field of its own. */
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape'){
+    if(confirmOverlay.classList.contains('open')){ resolveConfirm(false); return; }
+    if(document.getElementById('pdf-modal-overlay').classList.contains('open')){ closePdfViewer(); return; }
+    if(document.getElementById('reading-overlay').classList.contains('open')){ document.getElementById('reading-overlay').classList.remove('open'); return; }
+    if(addContentOverlayRef().classList.contains('open')){ addContentOverlayRef().classList.remove('open'); return; }
+    if(addPersonOverlayRef().classList.contains('open')){ addPersonOverlayRef().classList.remove('open'); return; }
+  }
+  if(e.key === 'Enter' && confirmOverlay.classList.contains('open')){
+    e.preventDefault(); resolveConfirm(true);
+  }
+});
+// Small indirection so this listener (defined early) can reach overlays declared further down the file.
+function addPersonOverlayRef(){ return document.getElementById('add-person-overlay'); }
+function addContentOverlayRef(){ return document.getElementById('add-content-overlay'); }
+
 /* ---------- data ---------- */
 let people = [];       // [{id, name, img, count}]
 let peopleData = {};   // { [personId]: {links, pdfs, notes} }
@@ -222,10 +258,15 @@ function renderPdfs(){
     if(e.target.closest('.item-delete-btn')) return;
     openPdfViewer(arr[parseInt(item.dataset.pdf)]);
   }));
-  el.querySelectorAll('.item-delete-btn').forEach(btn=> btn.addEventListener('click', (e)=>{
+  el.querySelectorAll('.item-delete-btn').forEach(btn=> btn.addEventListener('click', async (e)=>{
     e.stopPropagation();
     const p = arr[parseInt(btn.dataset.deletePdf)];
-    if(confirm(`Delete "${p.name}"? This can't be undone.`)) deletePdf(p);
+    const ok = await showConfirm({
+      title: 'Delete this PDF?',
+      message: `"${p.name}" will be removed permanently. This can't be undone.`,
+      confirmText: 'Delete'
+    });
+    if(ok) deletePdf(p);
   }));
 }
 
