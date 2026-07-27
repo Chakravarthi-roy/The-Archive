@@ -207,10 +207,37 @@ function renderPdfs(){
   const el = document.getElementById('detail-pdfs');
   el.innerHTML = filtered.length ? filtered.map(p=>`
     <div class="pdf-item" data-pdf="${p._i}">
+      <button class="item-delete-btn" data-delete-pdf="${p._i}" title="Delete this PDF" aria-label="Delete this PDF">✕</button>
       <span class="pdf-icon">📄</span>
       <div><div class="pdf-name">${p.name}</div><div class="pdf-size">${p.size}</div></div>
     </div>`).join('') : (detailSearchQuery ? `<div class="empty-group">No PDFs match your search.</div>` : '');
-  el.querySelectorAll('.pdf-item').forEach(item=> item.addEventListener('click', ()=> openPdfViewer(arr[parseInt(item.dataset.pdf)])));
+  el.querySelectorAll('.pdf-item').forEach(item=> item.addEventListener('click', (e)=>{
+    if(e.target.closest('.item-delete-btn')) return;
+    openPdfViewer(arr[parseInt(item.dataset.pdf)]);
+  }));
+  el.querySelectorAll('.item-delete-btn').forEach(btn=> btn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const p = arr[parseInt(btn.dataset.deletePdf)];
+    if(confirm(`Delete "${p.name}"? This can't be undone.`)) deletePdf(p);
+  }));
+}
+
+async function deletePdf(pdf){
+  try{
+    const { error } = await sb.from('pdfs').delete().eq('id', pdf.id);
+    if(error) throw error;
+    if(pdf.storage_path){ sb.storage.from('pdfs').remove([pdf.storage_path]).catch(()=>{}); }
+    const arr = peopleData[currentPerson.id].pdfs;
+    const idx = arr.findIndex(p=> p.id === pdf.id);
+    if(idx > -1) arr.splice(idx, 1);
+    renderPdfs();
+    updateLayout();
+    currentPerson.count = countFor(currentPerson.id);
+    document.getElementById('detail-sub').textContent = currentPerson.count + ' items filed';
+  }catch(e){
+    console.error('failed to delete pdf', e);
+    alert("Couldn't delete that PDF — check your connection and try again.");
+  }
 }
 function renderNotes(){
   const arr = peopleData[currentPerson.id].notes;
