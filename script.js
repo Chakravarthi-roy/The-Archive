@@ -104,7 +104,7 @@ function addContentOverlayRef(){ return document.getElementById('add-content-ove
 /* ---------- data ---------- */
 let people = [];       // [{id, name, img, count}]
 let peopleData = {};   // { [personId]: {links, pdfs, notes} }
-const MAX_PHOTO_BYTES = 1.5 * 1024 * 1024;
+const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -170,9 +170,14 @@ function rebuildBelt(){
       <div class="add-tile"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></div>
     </div>`;
   belt.innerHTML = people.map((p,i) => `
-    <div class="person" data-i="${i}"><div class="photo-ring"><img class="photo" src="${p.img}" alt="${p.name}"></div></div>
+    <div class="person" data-i="${i}"><div class="photo-ring"><img class="photo img-loading" src="${p.img}" alt="${p.name}"></div></div>
   `).join('') + addTileHtml;
   els = [...belt.children];
+  belt.querySelectorAll('img.photo').forEach(img=>{
+    if(img.complete){ img.classList.remove('img-loading'); return; }
+    img.addEventListener('load', ()=> img.classList.remove('img-loading'));
+    img.addEventListener('error', ()=> img.classList.remove('img-loading'));
+  });
 }
 
 let pos = 0, currentIndex = 0, paused = false;
@@ -341,7 +346,11 @@ function openDetail(person){
   detailSearchQuery = '';
   document.getElementById('detail-search').value = '';
   mainView.style.display = 'none'; detailView.classList.add('open');
-  document.getElementById('detail-photo').src = person.img;
+  const photoEl = document.getElementById('detail-photo');
+  photoEl.classList.add('img-loading');
+  photoEl.onload = ()=> photoEl.classList.remove('img-loading');
+  photoEl.onerror = ()=> photoEl.classList.remove('img-loading');
+  photoEl.src = person.img;
   document.getElementById('detail-name').textContent = person.name;
   document.getElementById('detail-sub').textContent = countFor(person.id) + ' items filed';
   renderLinks(); renderPdfs(); renderNotes();
@@ -511,7 +520,7 @@ document.getElementById('ap-photo-file').addEventListener('change', (e)=>{
   const label = document.getElementById('ap-upload-label');
   const thumb = document.getElementById('ap-preview');
   if(!file) return;
-  if(file.size > MAX_PHOTO_BYTES){ label.textContent = 'Too large — try a smaller image (max 1.5MB)'; return; }
+  if(file.size > MAX_PHOTO_BYTES){ label.textContent = 'Too large — try a smaller image (max 2MB)'; return; }
   uploadedPhotoFile = file;
   const reader = new FileReader();
   reader.onload = ()=>{
@@ -685,8 +694,16 @@ document.getElementById('ac-text-body').addEventListener('keydown', (e)=>{
 
 /* ---------- init ---------- */
 (async function init(){
-  await loadState();
-  rebuildBelt();
+  try{
+    await loadState();
+    rebuildBelt();
+  }catch(e){
+    console.error('initial load failed', e);
+  }finally{
+    const loadingEl = document.getElementById('app-loading');
+    loadingEl.classList.add('fade-out');
+    setTimeout(()=> loadingEl.style.display = 'none', 350);
+  }
   holdUntil = performance.now() + HOLD_MS;
   requestAnimationFrame(tick);
 })();
